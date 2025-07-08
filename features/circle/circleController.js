@@ -28,19 +28,20 @@ const createUsers = asyncHandler(async(req, res) => {
     })
     if (response) return res.status(201).json({message: response.data.data.id});
 
-
-   
-   
 })
 
 const createChallenge = asyncHandler(async (req, res) => {
-    const user_id = req.body;
+    const {userId} = req.body.userId;
 
     const response = await Circle.post("/auth/challenges", {
-        user_id,
-        client_id: process.env.APP_ID
+        userId,
+        
     });
-    res.json(response.data.data)
+    const challenge = response.data.data
+    res.status(200).json({
+        challengeId: challenge.id,
+        clientSecret: challenge.clientSecret
+    })
 })
 
 const verifyChallenge = asyncHandler(async (req, res) => {
