@@ -9,17 +9,27 @@ const getAppId = asyncHandler(async() => {
     return response.data.data.appId
 })
 
+const userToken = asyncHandler(async (req, res) => {
+    const {userId} = req.body;
+    const response = await Circle.post("/users/token", {
+        userId: r
+    });
+    res.json({
+        userToken: response.data.data.userToken,
+        encryptionKey: response.data.data.encryptionKey
+    }) ///encryptionKey
+})
+
 const createUsers = asyncHandler(async(req, res) => {
-
-    console.log("aopppp",await getAppId());
+    // getting appId automatically and passing it as a response to the frontend
+    const appId = await getAppId();
+    
     const {email, password} = req.body;
-
+    if (!email || !password) return res.status(400).json({message: "Required both email and password"})
     const userIsValid = await User.findOne({email});
-    console.log("validUser:",userIsValid)
-    if (userIsValid) return res.status(200).json({message: "connect wallet"});
+    if (userIsValid) return res.status(200).json({message: "sign in to wallet"});
 
     const userId = uuidv4();
-    console.log("userid:", userId);
     
     const hashedPassword = await bcrpyt.hash(password, 10);
 
@@ -33,45 +43,12 @@ const createUsers = asyncHandler(async(req, res) => {
 
     const response = await Circle.post("/users", {
         userId: user.userId
-    })
-    console.log("responsedByCircle:", response.data.data.id)
-    if (response) return res.status(201).json({userId: response.data.data.id, status: response.request.status});
+    });
+    if (response) return res.status(201).json({userId: response.data.data.id, status: response.data.data.status, appId});
+    
 
 })
 
-/* 
-const createChallenge = asyncHandler(async (req, res) => {
-    const {userId} = req.body.userId;
-
-    const response = await Circle.post("/auth/challenges", {
-        userId,
-    });
-    const challenge = response.data.data
-    res.status(200).json({
-        challengeId: challenge.id,
-        clientSecret: challenge.clientSecret
-    })
-}) */
-
-/* const verifyChallenge = asyncHandler(async (req, res) => {
-    const {challenge_id, verification_code} = req.body;
-
-    const response = await Circle.post("/auth/token", {
-        challenge_id, verification_code
-    })
-    res.json(response.data.data)
-}) */
-
-const userToken = asyncHandler(async (req, res) => {
-    const {userId} = req.body;
-    const response = await Circle.post("/users/token", {
-        userId
-    });
-    res.json({
-        userToken: response.data.data.userToken,
-        encryptionKey: response.data.data.encryptionKey
-    }) ///encryptionKey
-})
 
 const initializeUser = asyncHandler(async (req, res) => {
     const idempotencykey = uuidv4();
@@ -79,8 +56,13 @@ const initializeUser = asyncHandler(async (req, res) => {
         idempotencykey,
         blockchain: "ETH-MAINNET"
        
+    }, {
+        headers: {
+            "x-user-Token": "token"
+        }
     })
     res.json(response.data.data.challenge_id)
+    console.log("initialize:", response.data.data.challenge_id)
 })
 
 module.exports = {createUsers, userToken, initializeUser}

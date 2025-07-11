@@ -1,6 +1,7 @@
 const express = require("express");
 const dotenv = require("dotenv").config();
 const connectDB = require("./config/database.config");
+const router = require("./features/users/userRoute");
 
 const app = express();
 
@@ -13,3 +14,4 @@ app.listen(PORT, () => {
 })
 app.use(express.json());
 app.use('/api/circle', require("./features/circle/circleRoutes"))
+app.use("/api/user", router)
